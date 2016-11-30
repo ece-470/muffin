@@ -2,6 +2,9 @@
 from ctypes import *
 
 BAXTER_ARM_JOINTS_NUM = 7
+NUM_ARMS = 2
+RIGHT = 0
+LEFT = 1
 SY = 0
 SP = 1
 SR = 2
@@ -21,41 +24,49 @@ class BAXTER(Structure):
    _fields_ = [("arm", JOINTS*BAXTER_ARM_JOINTS_NUM),
                ("time",c_double)]
 
-offset_right = [0.0] * BAXTER_ARM_JOINTS_NUM
-offset_right[SY] = 0.78
-offset_right[SP] = 0.0
-offset_right[SR] = 0.0
-offset_right[EP] = 1.57
-offset_right[WY] = 0.0
-offset_right[WP] = 0.0
-offset_right[WY2] = 0.0
+class JOINTOFFSET(Structure):
+   _pack_ = 1
+   _fields_ = [("thetaOff", c_double),
+               ("thetaDir",c_double)]
 
-offset_left = [0.0] * BAXTER_ARM_JOINTS_NUM
-offset_left[SY] = -0.78
-offset_left[SP] = 0.0
-offset_left[SR] = 0.0
-offset_left[EP] = 1.57
-offset_left[WY] = 0.0
-offset_left[WP] = 0.0
-offset_left[WY2] = 0.0
+class ARM(Structure):
+   _pack_ = 1
+   _fields_ = [("joint", JOINTOFFSET*BAXTER_ARM_JOINTS_NUM)]
 
-dir_right = [0.0] * BAXTER_ARM_JOINTS_NUM
-dir_right[SY] = 1.0
-dir_right[SP] = 1.0
-dir_right[SR] = 1.0
-dir_right[EP] = 1.0
-dir_right[WY] = 1.0
-dir_right[WP] = 1.0
-dir_right[WY2] = 1.0
+class OFFSET(Structure):
+   _pack_ = 1
+   _fields = [("arm", ARM*NUM_ARMS)]
 
-dir_left = [0.0] * BAXTER_ARM_JOINTS_NUM
-dir_left[SY] = 1.0
-dir_left[SP] = 1.0
-dir_left[SR] = 1.0
-dir_left[EP] = 1.0
-dir_left[WY] = 1.0
-dir_left[WP] = 1.0
-dir_left[WY2] = 1.0
+off = OFFSET()
 
-RIGHT = 1
-LEFT = 2
+off.arm[RIGHT].joint[SY].thetaOff = 0.78
+off.arm[RIGHT].joint[SY].thetaDir = 1.0
+off.arm[RIGHT].joint[SP].thetaOff = 0.0
+off.arm[RIGHT].joint[SP].thetaDir = 1.0
+off.arm[RIGHT].joint[SR].thetaOff = 0.0
+off.arm[RIGHT].joint[SR].thetaDir = 1.0
+off.arm[RIGHT].joint[EP].thetaOff = 1.57
+off.arm[RIGHT].joint[EP].thetaDir = 1.0
+off.arm[RIGHT].joint[WY].thetaOff = 0.0
+off.arm[RIGHT].joint[WY].thetaDir = 1.0
+off.arm[RIGHT].joint[WP].thetaOff = 0.0
+off.arm[RIGHT].joint[WP].thetaDir = 1.0
+off.arm[RIGHT].joint[WY2].thetaOff = 0.0
+off.arm[RIGHT].joint[WY2].thetaDir = 1.0
+
+off.arm[LEFT].joint[SY].thetaOff = -0.78
+off.arm[LEFT].joint[SY].thetaDir = 1.0
+off.arm[LEFT].joint[SP].thetaOff = 0.0
+off.arm[LEFT].joint[SP].thetaDir = 1.0
+off.arm[LEFT].joint[SR].thetaOff = 0.0
+off.arm[LEFT].joint[SR].thetaDir = 1.0
+off.arm[LEFT].joint[EP].thetaOff = 1.57
+off.arm[LEFT].joint[EP].thetaDir = 1.0
+off.arm[LEFT].joint[WY].thetaOff = 0.0
+off.arm[LEFT].joint[WY].thetaDir = 1.0
+off.arm[LEFT].joint[WP].thetaOff = 0.0
+off.arm[LEFT].joint[WP].thetaDir = 1.0
+off.arm[LEFT].joint[WY2].thetaOff = 0.0
+off.arm[LEFT].joint[WY2].thetaDir = 1.0
+
+
