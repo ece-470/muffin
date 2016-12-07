@@ -13,8 +13,8 @@ WY = 4
 WP = 5
 WY2 = 6
 
-STATE = 'baxter_state'
-REF = 'baxter_ref'
+STATE_CHANNEL = 'baxter_state'
+REF_CHANNEL = 'baxter_ref'
 
 class JOINTS(Structure):
    _pack_ = 1
