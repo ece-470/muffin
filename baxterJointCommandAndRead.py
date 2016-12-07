@@ -2,8 +2,12 @@
 import argparse
 import sys
 import rospy
+import ach
 import baxter_interface as bi
 import baxterStructure as bs
+
+s = ach.Channel(bs.STATE)
+r = ach.Channel(bs.REF)
 
 def moveArm(ref2, arm, limb):
   ref = bs.A2B(ref2)
@@ -60,6 +64,8 @@ def main():
   state = bs.STATE()
   ref = bs.STATE()
 
+  [statuss, framesize] = s.get(state, wait=False, last=False)
+
  # for arm in range(0,bs.NUM_ARMS):
  #   for joint in range(0,bs.BAXTER_ARM_JOINTS_NUM):
  #     ref.arm[arm].joint[joint].ref = 0.0
@@ -72,12 +78,16 @@ def main():
 
   ref.arm[bs.LEFT].joint[bs.WY2].ref = 1.0
   moveArm(ref, bs.LEFT, left)
+  r.put(ref)
   state = getState(state,ref,left,right)
 
   print left.joint_angle('left_w2')
   print state.arm[bs.LEFT].joint[bs.WY2].pos
   print state.arm[bs.LEFT].joint[bs.WY2].ref
   print right.joint_angle('right_e1')
+
+s.close()
+r.close()
 
 if __name__ == '__main__':
   main()

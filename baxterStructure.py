@@ -13,6 +13,9 @@ WY = 4
 WP = 5
 WY2 = 6
 
+STATE = 'baxter_state'
+REF = 'baxter_ref'
+
 class JOINTS(Structure):
    _pack_ = 1
    _fields_ = [("ref",c_double),
