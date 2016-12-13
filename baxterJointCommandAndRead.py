@@ -60,29 +60,26 @@ def simSleep(T):
 	while((state.time - tick) < T):
 		[statuss, framesizes] = s.get(state, wait=True, last=False)
 
-def RotationMatrix_x(theta_x):
+def RotationMatrix(theta):
 	Rx = np.identity(4)
-	Rx[1,1] = np.cos(theta_x)
-	Rx[1,2] = np.sin(theta_x) * -1.0
-	Rx[2,1] = np.sin(theta_x)
-	Rx[2,2] = np.cos(theta_x)
-	return Rx
+	Rx[1,1] = np.cos(theta)
+	Rx[1,2] = np.sin(theta) * -1.0
+	Rx[2,1] = np.sin(theta)
+	Rx[2,2] = np.cos(theta)
 
-def RotationMatrix_y(theta_y):
 	Ry = np.identity(4)
-	Ry[0,0] = np.cos(theta_y)
-	Ry[0,2] = np.sin(theta_y)
-	Ry[2,0] = np.sin(theta_y) * -1.0
-	Ry[2,2] = np.cos(theta_y)
-	return Ry
+	Ry[0,0] = np.cos(theta)
+	Ry[0,2] = np.sin(theta)
+	Ry[2,0] = np.sin(theta) * -1.0
+	Ry[2,2] = np.cos(theta)
 
-def RotationMatrix_z(theta_z):
 	Rz = np.identity(4)
-	Rz[0,0] = np.cos(theta_z)
-	Rz[0,1] = np.sin(theta_z) * -1.0
-	Rz[1,0] = np.sin(theta_z)	
-	Rz[1,1] = np.cos(theta_z)
-	return Rz
+	Rz[0,0] = np.cos(theta)
+	Rz[0,1] = np.sin(theta) * -1.0
+	Rz[1,0] = np.sin(theta)	
+	Rz[1,1] = np.cos(theta)
+
+	return np.dot(np.dot(Rx,Ry),Rz)
 
 def getFK(arm, theta):
 	T1 = np.identity(4)
@@ -99,18 +96,17 @@ def getFK(arm, theta):
 	T6 = np.identity(4)
 	T7 = np.identity(4)
 
-	Q1 = np.dot(RotationMatrix_y(theta[0,0]),T1)
-	Q2 = np.dot(RotationMatrix_x(theta[1,0]),T2)
-	Q3 = np.dot(RotationMatrix_z(theta[2,0]),T3)
-	Q4 = np.dot(RotationMatrix_y(theta[3,0]),T4)
-	Q5 = np.dot(RotationMatrix_z(theta[4,0]),T5)
-	Q6 = np.dot(RotationMatrix_x(theta[5,0]),T6)
-	Q7 = np.dot(RotationMatrix_y(theta[6,0]),T7)
-
+	Q1 = np.dot(RotationMatrix(theta[0,0]),T1)
+	Q2 = np.dot(RotationMatrix(theta[1,0]),T2)
+	Q3 = np.dot(RotationMatrix(theta[2,0]),T3)
+	Q4 = np.dot(RotationMatrix(theta[3,0]),T4)
+	Q5 = np.dot(RotationMatrix(theta[4,0]),T5)
+	Q6 = np.dot(RotationMatrix(theta[5,0]),T6)
+	Q7 = np.dot(RotationMatrix(theta[6,0]),T7)
 
 	Q = np.dot(np.dot(np.dot(np.dot(np.dot(np.dot(Q1,Q2),Q3),Q4),Q5),Q6),Q7)
 
-	position = np.array([[round(Q[0,3],3)],[round(Q[1,3],3)],[round(Q[2,3],3)]])
+	position = np.transpose([Q[0,3],Q[1,3],Q[2,3]])
 
 	return position
 
@@ -132,7 +128,7 @@ def getNext(e, G, de, h):
 	dx = (G[0] - e[0]) * de / h
 	dy = (G[1] - e[1]) * de / h
 	dz = (G[2] - e[2]) * de / h
-	DE = np.array([[round(dx,3)],[round(dy,3)],[round(dz,3)]])
+	DE = np.transpose([dx,dy,dz])
 	return DE
 
 def getIK(arm, theta, G, ref, r):
@@ -159,12 +155,6 @@ def getIK(arm, theta, G, ref, r):
 		ref.arm[bs.LEFT].joint[bs.WY2].ref = tempTheta[4]
 		ref.arm[bs.LEFT].joint[bs.WY2].ref = tempTheta[5]
 		ref.arm[bs.LEFT].joint[bs.WY2].ref = tempTheta[6]
-		ref.ref[ha.LSP] = tempTheta[0]
-		ref.ref[ha.LSR] = tempTheta[1]
-		ref.ref[ha.LSY] = tempTheta[2]
-		ref.ref[ha.LEB] = tempTheta[3]
-		ref.ref[ha.LWY] = tempTheta[4]
-		ref.ref[ha.LWR] = tempTheta[5]
 	elif(arm == 'RIGHT'):
 		ref.arm[bs.RIGHT].joint[bs.WY2].ref = tempTheta[0]
 		ref.arm[bs.RIGHT].joint[bs.WY2].ref = tempTheta[1]
@@ -173,12 +163,6 @@ def getIK(arm, theta, G, ref, r):
 		ref.arm[bs.RIGHT].joint[bs.WY2].ref = tempTheta[4]
 		ref.arm[bs.RIGHT].joint[bs.WY2].ref = tempTheta[5]
 		ref.arm[bs.RIGHT].joint[bs.WY2].ref = tempTheta[6]
-		ref.ref[ha.RSP] = tempTheta[0]
-		ref.ref[ha.RSR] = tempTheta[1]
-		ref.ref[ha.RSY] = tempTheta[2]
-		ref.ref[ha.REB] = tempTheta[3]
-		ref.ref[ha.RWY] = tempTheta[4]
-		ref.ref[ha.RWR] = tempTheta[5]
 
 	r.put(ref)
 
