@@ -60,49 +60,52 @@ def simSleep(T):
 	while((state.time - tick) < T):
 		[statuss, framesizes] = s.get(state, wait=True, last=False)
 
-def RotationMatrix(theta):
+def RotationMatrix_x(theta_x):
 	Rx = np.identity(4)
-	Rx[1,1] = np.cos(theta)
-	Rx[1,2] = np.sin(theta) * -1.0
-	Rx[2,1] = np.sin(theta)
-	Rx[2,2] = np.cos(theta)
+	Rx[1,1] = np.cos(theta_x)
+	Rx[1,2] = np.sin(theta_x) * -1.0
+	Rx[2,1] = np.sin(theta_x)
+	Rx[2,2] = np.cos(theta_x)
+	return Rx
 
+def RotationMatrix_y(theta_y):
 	Ry = np.identity(4)
-	Ry[0,0] = np.cos(theta)
-	Ry[0,2] = np.sin(theta)
-	Ry[2,0] = np.sin(theta) * -1.0
-	Ry[2,2] = np.cos(theta)
+	Ry[0,0] = np.cos(theta_y)
+	Ry[0,2] = np.sin(theta_y)
+	Ry[2,0] = np.sin(theta_y) * -1.0
+	Ry[2,2] = np.cos(theta_y)
+	return Ry
 
+def RotationMatrix_z(theta_z):
 	Rz = np.identity(4)
-	Rz[0,0] = np.cos(theta)
-	Rz[0,1] = np.sin(theta) * -1.0
-	Rz[1,0] = np.sin(theta)	
-	Rz[1,1] = np.cos(theta)
-
-	return np.dot(np.dot(Rx,Ry),Rz)
+	Rz[0,0] = np.cos(theta_z)
+	Rz[0,1] = np.sin(theta_z) * -1.0
+	Rz[1,0] = np.sin(theta_z)	
+	Rz[1,1] = np.cos(theta_z)
+	return Rz
 
 def getFK(arm, theta):
 	T1 = np.identity(4)
-	if(arm == 'LEFT'):
-		T1[1,3] = 94.5
-	elif(arm == 'RIGHT'):
-		T1[1,3] = -94.5
+	T1[0,3] = 69.0
 	T2 = np.identity(4)
+	T2[0,3] = 364.35
 	T3 = np.identity(4)
+	T3[2,3] = 270.35
 	T4 = np.identity(4)
-	T4[2,3] = -179.14
+	T4[2,3] = -102.0
 	T5 = np.identity(4)
-	T5[2,3] = -181.59
+	T5[2,3] = -262.0
 	T6 = np.identity(4)
+	T6[] = 
 	T7 = np.identity(4)
 
-	Q1 = np.dot(RotationMatrix(theta[0,0]),T1)
-	Q2 = np.dot(RotationMatrix(theta[1,0]),T2)
-	Q3 = np.dot(RotationMatrix(theta[2,0]),T3)
-	Q4 = np.dot(RotationMatrix(theta[3,0]),T4)
-	Q5 = np.dot(RotationMatrix(theta[4,0]),T5)
-	Q6 = np.dot(RotationMatrix(theta[5,0]),T6)
-	Q7 = np.dot(RotationMatrix(theta[6,0]),T7)
+	Q1 = np.dot(RotationMatrix_y(theta[0,0]),T1)
+	Q2 = np.dot(RotationMatrix_x(theta[1,0]),T2)
+	Q3 = np.dot(RotationMatrix_z(theta[2,0]),T3)
+	Q4 = np.dot(RotationMatrix_y(theta[3,0]),T4)
+	Q5 = np.dot(RotationMatrix_z(theta[4,0]),T5)
+	Q6 = np.dot(RotationMatrix_x(theta[5,0]),T6)
+	Q7 = np.dot(RotationMatrix_x(theta[6,0]),T7)
 
 	Q = np.dot(np.dot(np.dot(np.dot(np.dot(np.dot(Q1,Q2),Q3),Q4),Q5),Q6),Q7)
 
@@ -148,21 +151,21 @@ def getIK(arm, theta, G, ref, r):
 		met = getMet(e, G)
 
 	if(arm == 'LEFT'):
-		ref.arm[bs.LEFT].joint[bs.WY2].ref = tempTheta[0]
-		ref.arm[bs.LEFT].joint[bs.WY2].ref = tempTheta[1]
-		ref.arm[bs.LEFT].joint[bs.WY2].ref = tempTheta[2]
-		ref.arm[bs.LEFT].joint[bs.WY2].ref = tempTheta[3]
+		ref.arm[bs.LEFT].joint[bs.SY].ref = tempTheta[0]
+		ref.arm[bs.LEFT].joint[bs.SP].ref = tempTheta[1]
+		ref.arm[bs.LEFT].joint[bs.WY].ref = tempTheta[2]
+		ref.arm[bs.LEFT].joint[bs.WP].ref = tempTheta[3]
 		ref.arm[bs.LEFT].joint[bs.WY2].ref = tempTheta[4]
-		ref.arm[bs.LEFT].joint[bs.WY2].ref = tempTheta[5]
-		ref.arm[bs.LEFT].joint[bs.WY2].ref = tempTheta[6]
+		ref.arm[bs.LEFT].joint[bs.SR].ref = tempTheta[5]
+		ref.arm[bs.LEFT].joint[bs.EP].ref = tempTheta[6]
 	elif(arm == 'RIGHT'):
-		ref.arm[bs.RIGHT].joint[bs.WY2].ref = tempTheta[0]
-		ref.arm[bs.RIGHT].joint[bs.WY2].ref = tempTheta[1]
-		ref.arm[bs.RIGHT].joint[bs.WY2].ref = tempTheta[2]
-		ref.arm[bs.RIGHT].joint[bs.WY2].ref = tempTheta[3]
+		ref.arm[bs.RIGHT].joint[bs.SY].ref = tempTheta[0]
+		ref.arm[bs.RIGHT].joint[bs.SP].ref = tempTheta[1]
+		ref.arm[bs.RIGHT].joint[bs.WY].ref = tempTheta[2]
+		ref.arm[bs.RIGHT].joint[bs.WP].ref = tempTheta[3]
 		ref.arm[bs.RIGHT].joint[bs.WY2].ref = tempTheta[4]
-		ref.arm[bs.RIGHT].joint[bs.WY2].ref = tempTheta[5]
-		ref.arm[bs.RIGHT].joint[bs.WY2].ref = tempTheta[6]
+		ref.arm[bs.RIGHT].joint[bs.SR].ref = tempTheta[5]
+		ref.arm[bs.RIGHT].joint[bs.EP].ref = tempTheta[6]
 
 	r.put(ref)
 
