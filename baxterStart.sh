@@ -16,8 +16,13 @@ EnableBaxter() {
 }
 
 SetupChannel() {
-  ach -l -C "baxter_ref" -m 20 -n 3000
-  ach -l -C "baxter_state" -m 20 -n 3000
+  ach -1 -C "baxter_ref" -m 20 -n 3000
+  ach -1 -C "baxter_state" -m 20 -n 3000
+}
+
+SymLink() {
+  ln -s ~/projects/muffin/baxterJointCommandAndRead.py baxterJointCommandAndRead.py
+  ln -s ~/projects/muffin/baxterStructure.py baxterStructure.py
 }
 
 case $1 in 
@@ -30,11 +35,15 @@ case $1 in
   'workspace')
     Workspace
   ;;
+  'link')
+    SymLink
+  ;;
   *)
     echo 'Options:'
     echo 'sim       - setup the simulator for baxter'
     echo 'start     - enable baxter, setup channels and run baxterJoint file'
     echo 'workspace - enter baxter workspace'
+    echo 'link      - symbolic link into baxter_example'
   ;;
 esac
 
