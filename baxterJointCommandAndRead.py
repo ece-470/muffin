@@ -5,6 +5,8 @@ import rospy
 import ach
 import baxter_interface as bi
 import baxterStructure as bs
+import numpy as np
+import math
 
 def moveArm(ref2, arm, limb):
   ref = bs.A2B(ref2)
@@ -52,6 +54,134 @@ def getState(state,ref,left,right):
 
   return state2
 
+def simSleep(T):
+	[statuss, framesizes] = s.get(state, wait=False, last=False)
+	tick = state.time
+	while((state.time - tick) < T):
+		[statuss, framesizes] = s.get(state, wait=True, last=False)
+
+def RotationMatrix_x(theta_x):
+	Rx = np.identity(4)
+	Rx[1,1] = np.cos(theta_x)
+	Rx[1,2] = np.sin(theta_x) * -1.0
+	Rx[2,1] = np.sin(theta_x)
+	Rx[2,2] = np.cos(theta_x)
+	return Rx
+
+def RotationMatrix_y(theta_y):
+	Ry = np.identity(4)
+	Ry[0,0] = np.cos(theta_y)
+	Ry[0,2] = np.sin(theta_y)
+	Ry[2,0] = np.sin(theta_y) * -1.0
+	Ry[2,2] = np.cos(theta_y)
+	return Ry
+
+def RotationMatrix_z(theta_z):
+	Rz = np.identity(4)
+	Rz[0,0] = np.cos(theta_z)
+	Rz[0,1] = np.sin(theta_z) * -1.0
+	Rz[1,0] = np.sin(theta_z)	
+	Rz[1,1] = np.cos(theta_z)
+	return Rz
+
+def getFK(arm, theta):
+	T1 = np.identity(4)
+	if(arm == 'LEFT'):
+		T1[1,3] = 94.5
+	elif(arm == 'RIGHT'):
+		T1[1,3] = -94.5
+	T2 = np.identity(4)
+	T3 = np.identity(4)
+	T4 = np.identity(4)
+	T4[2,3] = -179.14
+	T5 = np.identity(4)
+	T5[2,3] = -181.59
+	T6 = np.identity(4)
+	T7 = np.identity(4)
+
+	Q1 = np.dot(RotationMatrix_y(theta[0,0]),T1)
+	Q2 = np.dot(RotationMatrix_x(theta[1,0]),T2)
+	Q3 = np.dot(RotationMatrix_z(theta[2,0]),T3)
+	Q4 = np.dot(RotationMatrix_y(theta[3,0]),T4)
+	Q5 = np.dot(RotationMatrix_z(theta[4,0]),T5)
+	Q6 = np.dot(RotationMatrix_x(theta[5,0]),T6)
+	Q7 = np.dot(RotationMatrix_y(theta[6,0]),T7)
+
+
+	Q = np.dot(np.dot(np.dot(np.dot(np.dot(np.dot(Q1,Q2),Q3),Q4),Q5),Q6),Q7)
+
+	position = np.array([[round(Q[0,3],3)],[round(Q[1,3],3)],[round(Q[2,3],3)]])
+
+	return position
+
+def getJ(arm, theta, dtheta):
+	jac = np.zeros((3,7))
+	for i in range((np.shape(jac))[0]):
+		for j in range((np.shape(jac))[1]):
+			tempTheta = np.copy(theta)
+			tempTheta[j] = theta[j] + dtheta
+			fk = getFK(arm, tempTheta)
+			jac[i,j] = (fk[i,0]) / dtheta
+	return jac
+
+def getMet(e, G):
+	met = math.sqrt(math.pow(e[0] - G[0],2) + math.pow(e[1] - G[1],2) + math.pow(e[2] - G[2],2))
+	return met
+
+def getNext(e, G, de, h):
+	dx = (G[0] - e[0]) * de / h
+	dy = (G[1] - e[1]) * de / h
+	dz = (G[2] - e[2]) * de / h
+	DE = np.array([[round(dx,3)],[round(dy,3)],[round(dz,3)]])
+	return DE
+
+def getIK(arm, theta, G, ref, r):
+	dtheta = 0.01
+	de = 15
+	e = getFK(arm, theta)
+	tempTheta = np.copy(theta)
+	met = getMet(e, G)
+	tempMet = met
+	while(met > 5):
+		jac = getJ(arm, tempTheta, dtheta)
+		jacInv = np.linalg.pinv(jac)
+		DE = getNext(e, G, de, tempMet)
+		Dtheta = np.dot(jacInv, DE)
+		tempTheta = np.add(tempTheta, Dtheta)
+		e = getFK(arm, tempTheta)
+		met = getMet(e, G)
+
+	if(arm == 'LEFT'):
+		ref.arm[bs.LEFT].joint[bs.WY2].ref = tempTheta[0]
+		ref.arm[bs.LEFT].joint[bs.WY2].ref = tempTheta[1]
+		ref.arm[bs.LEFT].joint[bs.WY2].ref = tempTheta[2]
+		ref.arm[bs.LEFT].joint[bs.WY2].ref = tempTheta[3]
+		ref.arm[bs.LEFT].joint[bs.WY2].ref = tempTheta[4]
+		ref.arm[bs.LEFT].joint[bs.WY2].ref = tempTheta[5]
+		ref.arm[bs.LEFT].joint[bs.WY2].ref = tempTheta[6]
+		ref.ref[ha.LSP] = tempTheta[0]
+		ref.ref[ha.LSR] = tempTheta[1]
+		ref.ref[ha.LSY] = tempTheta[2]
+		ref.ref[ha.LEB] = tempTheta[3]
+		ref.ref[ha.LWY] = tempTheta[4]
+		ref.ref[ha.LWR] = tempTheta[5]
+	elif(arm == 'RIGHT'):
+		ref.arm[bs.RIGHT].joint[bs.WY2].ref = tempTheta[0]
+		ref.arm[bs.RIGHT].joint[bs.WY2].ref = tempTheta[1]
+		ref.arm[bs.RIGHT].joint[bs.WY2].ref = tempTheta[2]
+		ref.arm[bs.RIGHT].joint[bs.WY2].ref = tempTheta[3]
+		ref.arm[bs.RIGHT].joint[bs.WY2].ref = tempTheta[4]
+		ref.arm[bs.RIGHT].joint[bs.WY2].ref = tempTheta[5]
+		ref.arm[bs.RIGHT].joint[bs.WY2].ref = tempTheta[6]
+		ref.ref[ha.RSP] = tempTheta[0]
+		ref.ref[ha.RSR] = tempTheta[1]
+		ref.ref[ha.RSY] = tempTheta[2]
+		ref.ref[ha.REB] = tempTheta[3]
+		ref.ref[ha.RWY] = tempTheta[4]
+		ref.ref[ha.RWR] = tempTheta[5]
+
+	r.put(ref)
+
 def main():
   s = ach.Channel(bs.STATE_CHANNEL)
   r = ach.Channel(bs.REF_CHANNEL)
@@ -66,26 +196,29 @@ def main():
 
   [statuss, framesize] = s.get(state, wait=False, last=False)
 
-  #for arm in range(0,bs.NUM_ARMS):
-  #  for joint in range(0,bs.BAXTER_ARM_JOINTS_NUM):
-  #    ref.arm[arm].joint[joint].ref = 0.0
-  #    ref.arm[arm].joint[joint].pos = 0.0
-  #    ref.arm[arm].joint[joint].tor = 0.0
+  lTheta = np.zeros((7,1))
+  rTheta = np.zeros((7,1))
 
-  ref.arm[bs.RIGHT].joint[bs.WY2].ref = 3.0
-  moveArm(ref, bs.RIGHT, right)
-  state = getState(state,ref,left,right)
-  r.put(ref)
+  lGoal = np.array([[10.0],[10.0],[10.0]])
+  getIK(bs.LEFT, lTheta, lGoal, ref, r)
 
-  ref.arm[bs.LEFT].joint[bs.WY2].ref = 3.0
-  moveArm(ref, bs.LEFT, left)
-  state = getState(state,ref,left,right)
-  r.put(ref)
 
-  print left.joint_angle('left_w2')
-  print state.arm[bs.LEFT].joint[bs.WY2].pos
-  print state.arm[bs.LEFT].joint[bs.WY2].ref
-  print right.joint_angle('right_e1')
+
+
+#  ref.arm[bs.RIGHT].joint[bs.WY2].ref = 3.0
+#  moveArm(ref, bs.RIGHT, right)
+#  state = getState(state,ref,left,right)
+#  r.put(ref)
+#
+#  ref.arm[bs.LEFT].joint[bs.WY2].ref = 3.0
+#  moveArm(ref, bs.LEFT, left)
+#  state = getState(state,ref,left,right)
+#  r.put(ref)
+#
+#  print left.joint_angle('left_w2')
+#  print state.arm[bs.LEFT].joint[bs.WY2].pos
+#  print state.arm[bs.LEFT].joint[bs.WY2].ref
+#  print right.joint_angle('right_e1')
 
   s.close()
   r.close()

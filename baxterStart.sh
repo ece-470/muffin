@@ -12,7 +12,6 @@ StartBaxter() {
 EnableBaxter() {
   rosrun baxter_tools enable_robot.py -e
   SetupChannel
-  rosrun baxter_examples baxterJointCommandAndRead.py
 }
 
 SetupChannel() {
@@ -25,11 +24,15 @@ SymLink() {
   ln -s ~/projects/muffin/baxterStructure.py baxterStructure.py
 }
 
+RunBaxterJoint() {
+  rosrun baxter_examples baxterJointCommandAndRead.py
+}
+
 case $1 in 
   'sim')
     StartBaxter
   ;;
-  'start')
+  'enable')
     EnableBaxter
   ;;
   'workspace')
@@ -38,12 +41,16 @@ case $1 in
   'link')
     SymLink
   ;;
+  'run')
+    RunBaxterJoint
+  ;;
   *)
     echo 'Options:'
     echo 'sim       - setup the simulator for baxter'
-    echo 'start     - enable baxter, setup channels and run baxterJoint file'
+    echo 'enable     - enable baxter, setup channels and run baxterJoint file'
     echo 'workspace - enter baxter workspace'
     echo 'link      - symbolic link into baxter_example'
+    echo 'run       - run baxter joint command and read file'
   ;;
 esac
 
