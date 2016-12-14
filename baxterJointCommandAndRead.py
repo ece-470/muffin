@@ -190,7 +190,7 @@ def main():
   getIK(bs.LEFT, lTheta, lGoal, ref, r, left)
 
   #rGoal = np.array([[0.807],[0.0],[0.191]]) # zero position
-  rGoal = np.array([[1.007],[0.0],[0.191]])
+  rGoal = np.array([[0.807],[-0.5],[0.391]])
   getIK(bs.RIGHT, rTheta, rGoal, ref, r, right)
 
 #  ref.arm[bs.RIGHT].joint[bs.WY2].ref = 3.0
