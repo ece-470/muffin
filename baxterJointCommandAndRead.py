@@ -60,62 +60,31 @@ def simSleep(T):
 	while((state.time - tick) < T):
 		[statuss, framesizes] = s.get(state, wait=True, last=False)
 
-def RotationMatrix_x(alpha):
-	Rx = np.identity(4)
-	Rx[1,1] = np.cos(alpha)
-	Rx[1,2] = np.sin(alpha) * -1.0
-	Rx[2,1] = np.sin(alpha)
-	Rx[2,2] = np.cos(alpha)
-	return Rx
-
-def RotationMatrix_z(theta):
-	Rz = np.identity(4)
-	Rz[0,0] = np.cos(theta)
-	Rz[0,1] = np.sin(theta) * -1.0
-	Rz[1,0] = np.sin(theta)	
-	Rz[1,1] = np.cos(theta)
-	return Rz
-
-def TranslationMatrix_z(d):
-	Tz = np.identity(4)
-	Tz[2,3] = d
-	return Tz
-
-def TranslationMatrix_x(a):
-	Tx = np.identity(4)
-	Tx[0,3] = a
-	return Tx
+def DHMatrix(alpha,a,d,theta):
+	T=np.array([
+		[math.cos(theta),-math.sin(theta)*math.cos(alpha),math.sin(theta)*math.sin(alpha),
+		a*math.cos(theta)],
+		[math.sin(theta),math.cos(theta)*math.cos(alpha),-math.cos(theta)*math.sin(alpha),a*math.sin(theta)],
+		[0,math.sin(alpha),math.cos(alpha),d],
+		[0,0,0,1],
+		])
+	return T
 
 def getFK(arm, theta):
-	T = np.array([np.zeros((4,4)), np.zeros((4,4)), np.zeros((4,4)), np.zeros((4,4)), np.zeros((4,4)), np.zeros((4,4))])
-	if arm == bs.LEFT:
-		lalpha = np.array([-np.pi/2, np.pi/2, -np.pi/2, np.pi/2, -np.pi/2, np.pi/2])
-		ld = np.array([0.27, 0.0, 0.102+0.262, 0.0, 0.104+0.262, 0.0])
-		la = np.array([0.69, 0.0, 0.69, 0.0, 0.01, 0.0])
-		for i in range(6):
-			if i == 1:
-				Rotz = RotationMatrix_z(theta[i]+np.pi/2)
-			else:
-				Rotz = RotationMatrix_z(theta[i])
-			Rotx = RotationMatrix_x(lalpha[i])
-			Tranz = TranslationMatrix_z(ld[i])
-			Tranx = TranslationMatrix_x(la[i])
-			R = np.dot(np.dot(np.dot(Rotx,Tranx),Rotz),Tranz)
-			T[i] = R
-	elif arm == bs.RIGHT:
-		ralpha = np.array([-np.pi/2, np.pi/2, -np.pi/2, np.pi/2, -np.pi/2, np.pi/2])
-		rd = np.array([0.27, 0.0, 0.102+0.262, 0.0, 0.104+0.262, 0.0])
-		ra = np.array([0.69, 0.0, 0.69, 0.0, 0.01, 0.0])
-		for i in range(6):
-			if i == 1:
-				Rotz = RotationMatrix_z(theta[i]+np.pi/2)
-			else:
-				Rotz = RotationMatrix_z(theta[i])
-			Rotx = RotationMatrix_x(ralpha[i])
-			Tranz = TranslationMatrix_z(rd[i])
-			Tranx = TranslationMatrix_x(ra[i])
-			R = np.dot(np.dot(np.dot(Rotx,Tranx),Rotz),Tranz)
-			T[i] = R
+	T = np.array([[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]])
+
+	DH = np.array([
+		[-np.pi/2,0.069,0.2703,theta[0]],
+		[np.pi/2,0,0,theta[1]],
+		[-np.pi/2,0.069,0.3644,theta[2]],
+		[np.pi/2,0,0,theta[3]],
+		[-np.pi/2,0.01,0.3743,theta[4]],
+		[np.pi/2,0,0,theta[5]],
+		[0,0,0,theta[6]],
+		])
+
+	for i in range(0,7):
+		T[i] = DHMatrix(DH[i][0],DH[i][1],DH[i][2],DH[i][3])
 
 	T = np.dot(np.dot(np.dot(np.dot(np.dot(T[0],T[1]),T[2]),T[3]),T[4]),T[5])
 
@@ -148,20 +117,19 @@ def getIK(arm, theta, G, ref, r, limb):
 	dtheta = 0.01
 	de = 15
 	e = getFK(arm, theta)
-	print 'bFK:', e
+	print 'FK', e
 	tempTheta = np.copy(theta)
 	met = getMet(e, G)
-	print 'bmet', met
+	print 'met', met
 	tempMet = met
 	while(met > 1):
+		print 'FK', e
 		jac = getJ(arm, tempTheta, dtheta)
 		jacInv = np.linalg.pinv(jac)
 		DE = getNext(e, G, de, tempMet)
 		Dtheta = np.dot(jacInv, DE)
 		tempTheta = np.add(tempTheta, Dtheta)
 		e = getFK(arm, tempTheta)
-		print 'iFK:', e
-		print 'arm:', arm
 		met = getMet(e, G)
 
 	if arm == bs.LEFT:
