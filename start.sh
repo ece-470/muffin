@@ -1,8 +1,10 @@
 ROS_LOC=/home/student/ros_ws
+MUFFIN=/home/student/projects/muffin
 
 Workspace() {
   cd $ROS_LOC
   ./baxter.sh sim
+  cd $MUFFIN
 }
 
 StartBaxter() {
