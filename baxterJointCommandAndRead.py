@@ -88,7 +88,7 @@ def TranslationMatrix_x(a):
 
 def getFK(arm, theta):
 	T = np.array([np.zeros((4,4)), np.zeros((4,4)), np.zeros((4,4)), np.zeros((4,4)), np.zeros((4,4)), np.zeros((4,4))])
-	if arm == 'LEFT':
+	if arm == bs.LEFT:
 		lalpha = np.array([-np.pi/2, np.pi/2, -np.pi/2, np.pi/2, -np.pi/2, np.pi/2])
 		ld = np.array([0.27, 0.0, 0.102+0.262, 0.0, 0.104+0.262, 0.0])
 		la = np.array([0.69, 0.0, 0.69, 0.0, 0.01, 0.0])
@@ -99,11 +99,11 @@ def getFK(arm, theta):
 				Rotz = RotationMatrix_z(theta[i])
 			Rotx = RotationMatrix_x(lalpha[i])
 			Tranz = TranslationMatrix_z(ld[i])
-			Tranx = TranslationMatrix_x(a[i])
+			Tranx = TranslationMatrix_x(la[i])
 			R = np.dot(np.dot(np.dot(Rotx,Tranx),Rotz),Tranz)
 			T[i] = R
-	elif arm == 'RIGHT':
-		ralpha = np.array([np.pi/2, -np.pi/2, np.pi/2, -np.pi/2, np.pi/2, -np.pi/2])
+	elif arm == bs.RIGHT:
+		ralpha = np.array([-np.pi/2, np.pi/2, -np.pi/2, np.pi/2, -np.pi/2, np.pi/2])
 		rd = np.array([0.27, 0.0, 0.102+0.262, 0.0, 0.104+0.262, 0.0])
 		ra = np.array([0.69, 0.0, 0.69, 0.0, 0.01, 0.0])
 		for i in range(6):
@@ -144,37 +144,42 @@ def getNext(e, G, de, h):
 	DE = np.array([[round(dx,3)],[round(dy,3)],[round(dz,3)]])
 	return DE
 
-def getIK(arm, theta, G, ref, r):
+def getIK(arm, theta, G, ref, r, limb):
 	dtheta = 0.01
 	de = 15
 	e = getFK(arm, theta)
+	print 'bFK:', e
 	tempTheta = np.copy(theta)
 	met = getMet(e, G)
+	print 'bmet', met
 	tempMet = met
-	while(met > 5):
+	while(met > 1):
 		jac = getJ(arm, tempTheta, dtheta)
 		jacInv = np.linalg.pinv(jac)
 		DE = getNext(e, G, de, tempMet)
 		Dtheta = np.dot(jacInv, DE)
 		tempTheta = np.add(tempTheta, Dtheta)
 		e = getFK(arm, tempTheta)
-		print 'FK', e
+		print 'iFK:', e
+		print 'arm:', arm
 		met = getMet(e, G)
 
-		if(arm == 'LEFT'):
-			ref.arm[bs.LEFT].joint[bs.SY].ref = tempTheta[0]
-			ref.arm[bs.LEFT].joint[bs.SP].ref = tempTheta[1]
-			ref.arm[bs.LEFT].joint[bs.WY].ref = tempTheta[2]
-			ref.arm[bs.LEFT].joint[bs.WP].ref = tempTheta[3]
-			ref.arm[bs.LEFT].joint[bs.SR].ref = tempTheta[4]
-			ref.arm[bs.LEFT].joint[bs.EP].ref = tempTheta[5]
-		elif(arm == 'RIGHT'):
-			ref.arm[bs.RIGHT].joint[bs.SY].ref = tempTheta[0]
-			ref.arm[bs.RIGHT].joint[bs.SP].ref = tempTheta[1]
-			ref.arm[bs.RIGHT].joint[bs.WY].ref = tempTheta[2]
-			ref.arm[bs.RIGHT].joint[bs.WP].ref = tempTheta[3]
-			ref.arm[bs.RIGHT].joint[bs.SR].ref = tempTheta[4]
-			ref.arm[bs.RIGHT].joint[bs.EP].ref = tempTheta[5]
+	if arm == bs.LEFT:
+		ref.arm[bs.LEFT].joint[bs.SY].ref = tempTheta[0]
+		ref.arm[bs.LEFT].joint[bs.SP].ref = tempTheta[1]
+		ref.arm[bs.LEFT].joint[bs.WY].ref = tempTheta[2]
+		ref.arm[bs.LEFT].joint[bs.WP].ref = tempTheta[3]
+		ref.arm[bs.LEFT].joint[bs.SR].ref = tempTheta[4]
+		ref.arm[bs.LEFT].joint[bs.EP].ref = tempTheta[5]
+		moveArm(ref, arm, limb)
+	elif arm == bs.RIGHT:
+		ref.arm[bs.RIGHT].joint[bs.SY].ref = tempTheta[0]
+		ref.arm[bs.RIGHT].joint[bs.SP].ref = tempTheta[1]
+		ref.arm[bs.RIGHT].joint[bs.WY].ref = tempTheta[2]
+		ref.arm[bs.RIGHT].joint[bs.WP].ref = tempTheta[3]
+		ref.arm[bs.RIGHT].joint[bs.SR].ref = tempTheta[4]
+		ref.arm[bs.RIGHT].joint[bs.EP].ref = tempTheta[5]
+		moveArm(ref, arm, limb)
 
 	r.put(ref)
 
@@ -195,19 +200,17 @@ def main():
   lTheta = np.zeros((6,1))
   rTheta = np.zeros((6,1))
 
-  lGoal = np.array([[1.20],[1.10],[1.2]])
-  getIK(bs.LEFT, lTheta, lGoal, ref, r)
+  lGoal = np.array([[0.0],[0.0],[0.0]])
+  getIK(bs.LEFT, lTheta, lGoal, ref, r, left)
 
-  rGoal = np.array([[1.20],[1.10],[1.2]])
-  getIK(bs.RIGHT, rTheta, rGoal, ref, r)
-
-
+  rGoal = np.array([[0.0],[0.0],[0.0]])
+  getIK(bs.RIGHT, rTheta, rGoal, ref, r, right)
 
 #  ref.arm[bs.RIGHT].joint[bs.WY2].ref = 3.0
 #  moveArm(ref, bs.RIGHT, right)
 #  state = getState(state,ref,left,right)
 #  r.put(ref)
-#
+
 #  ref.arm[bs.LEFT].joint[bs.WY2].ref = 3.0
 #  moveArm(ref, bs.LEFT, left)
 #  state = getState(state,ref,left,right)
