@@ -131,7 +131,8 @@ def getIK(arm, theta, G, ref, r, limb):
 		e = getFK(arm, tempTheta)
 		met = getMet(e, G)
 		if(time.time() - t1 > 15):
-			break;
+			print "over 15 seconds:",arm
+			break
 
 	if arm == bs.LEFT:
 		ref.arm[bs.LEFT].joint[bs.SY].ref = tempTheta[0]
@@ -185,15 +186,21 @@ def main():
   #lTheta[5,0] = 0.0
   #print 'LEFT FK', getFK(bs.LEFT, lTheta)
 
-  lGoal = np.array([[0.807],[0.0],[0.191]]) # zero position
-  #lGoal = np.transpose(np.array([0.8,0.3,0.6]))
-  getIK(bs.LEFT, lTheta, lGoal, ref, r, left)
-
   #rGoal = np.array([[0.807],[0.0],[0.191]]) # zero position
-  rGoal = np.array([[0.807],[-0.5],[0.391]])
+  rx = float(raw_input("rX: "))
+  ry = float(raw_input("rY: "))
+  rz = float(raw_input("rZ: "))
+  rGoal = np.array([[rx],[ry],[rz]])
   getIK(bs.RIGHT, rTheta, rGoal, ref, r, right)
 
-#  ref.arm[bs.RIGHT].joint[bs.WY2].ref = 3.0
+  #lGoal = np.array([[0.807],[0.0],[0.191]]) # zero position
+  lx = float(raw_input("lX: "))
+  ly = float(raw_input("lY: "))
+  lz = float(raw_input("lZ: "))
+  lGoal = np.array([[lx],[ly],[lz]])
+  getIK(bs.LEFT, lTheta, lGoal, ref, r, left)
+
+#  ref.arm[bs.RIGHT].joint[bs.WY12].ref = 3.0
 #  moveArm(ref, bs.RIGHT, right)
 #  state = getState(state,ref,left,right)
 #  r.put(ref)
