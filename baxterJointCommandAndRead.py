@@ -62,8 +62,7 @@ def simSleep(T):
 
 def DHMatrix(alpha,a,d,theta):
 	T=np.array([
-		[math.cos(theta),-math.sin(theta)*math.cos(alpha),math.sin(theta)*math.sin(alpha),
-		a*math.cos(theta)],
+		[math.cos(theta),-math.sin(theta)*math.cos(alpha),math.sin(theta)*math.sin(alpha),a*math.cos(theta)],
 		[math.sin(theta),math.cos(theta)*math.cos(alpha),-math.cos(theta)*math.sin(alpha),a*math.sin(theta)],
 		[0,math.sin(alpha),math.cos(alpha),d],
 		[0,0,0,1],
@@ -71,7 +70,7 @@ def DHMatrix(alpha,a,d,theta):
 	return T
 
 def getFK(arm, theta):
-	T = np.array([[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]])
+	T = np.array([np.zeros((4,4)),np.zeros((4,4)),np.zeros((4,4)),np.zeros((4,4)),np.zeros((4,4)),np.zeros((4,4)),np.zeros((4,4))])
 
 	DH = np.array([
 		[-np.pi/2,0.069,0.2703,theta[0]],
@@ -93,7 +92,7 @@ def getFK(arm, theta):
 	return position
 
 def getJ(arm, theta, dtheta):
-	jac = np.zeros((3,6))
+	jac = np.zeros((3,7))
 	for i in range((np.shape(jac))[0]):
 		for j in range((np.shape(jac))[1]):
 			tempTheta = np.copy(theta)
@@ -165,10 +164,10 @@ def main():
 
   [statuss, framesize] = s.get(state, wait=False, last=False)
 
-  lTheta = np.zeros((6,1))
-  rTheta = np.zeros((6,1))
+  lTheta = np.zeros((7,1))
+  rTheta = np.zeros((7,1))
 
-  lGoal = np.array([[0.0],[0.0],[0.0]])
+  lGoal = np.array([[1.42],[0.970],[1.0]])
   getIK(bs.LEFT, lTheta, lGoal, ref, r, left)
 
   rGoal = np.array([[0.0],[0.0],[0.0]])
