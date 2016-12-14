@@ -7,6 +7,7 @@ import baxter_interface as bi
 import baxterStructure as bs
 import numpy as np
 import math
+import time
 
 def moveArm(ref2, arm, limb):
   ref = bs.A2B(ref2)
@@ -120,6 +121,7 @@ def getIK(arm, theta, G, ref, r, limb):
 	tempTheta = np.copy(theta)
 	met = getMet(e, G)
 	tempMet = met
+	t1 = time.time()
 	while(met > 0.15):
 		jac = getJ(arm, tempTheta, dtheta)
 		jacInv = np.linalg.pinv(jac)
@@ -128,6 +130,8 @@ def getIK(arm, theta, G, ref, r, limb):
 		tempTheta = np.add(tempTheta, Dtheta)
 		e = getFK(arm, tempTheta)
 		met = getMet(e, G)
+		if(time.time() - t1 > 15):
+			break;
 
 	if arm == bs.LEFT:
 		ref.arm[bs.LEFT].joint[bs.SY].ref = tempTheta[0]
@@ -181,12 +185,12 @@ def main():
   #lTheta[5,0] = 0.0
   #print 'LEFT FK', getFK(bs.LEFT, lTheta)
 
-  #lGoal = np.array([[0.807],[0.0],[0.191]]) # zero position
-  lGoal = np.transpose(np.array([0.8,0.3,0.6]))
+  lGoal = np.array([[0.807],[0.0],[0.191]]) # zero position
+  #lGoal = np.transpose(np.array([0.8,0.3,0.6]))
   getIK(bs.LEFT, lTheta, lGoal, ref, r, left)
 
   #rGoal = np.array([[0.807],[0.0],[0.191]]) # zero position
-  rGoal = np.array([[0.8],[0.3],[0.6]])
+  rGoal = np.array([[1.007],[0.0],[0.191]])
   getIK(bs.RIGHT, rTheta, rGoal, ref, r, right)
 
 #  ref.arm[bs.RIGHT].joint[bs.WY2].ref = 3.0
