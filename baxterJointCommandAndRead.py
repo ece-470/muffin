@@ -114,7 +114,7 @@ def getNext(e, G, de, h):
 
 def getIK(arm, theta, G, ref, r, limb):
 	dtheta = 0.01
-	de = 15
+	de = 0.15
 	e = getFK(arm, theta)
 	print 'FK', e
 	tempTheta = np.copy(theta)
@@ -134,18 +134,20 @@ def getIK(arm, theta, G, ref, r, limb):
 	if arm == bs.LEFT:
 		ref.arm[bs.LEFT].joint[bs.SY].ref = tempTheta[0]
 		ref.arm[bs.LEFT].joint[bs.SP].ref = tempTheta[1]
-		ref.arm[bs.LEFT].joint[bs.WY].ref = tempTheta[2]
-		ref.arm[bs.LEFT].joint[bs.WP].ref = tempTheta[3]
-		ref.arm[bs.LEFT].joint[bs.SR].ref = tempTheta[4]
-		ref.arm[bs.LEFT].joint[bs.EP].ref = tempTheta[5]
+		ref.arm[bs.LEFT].joint[bs.SR].ref = tempTheta[2]
+		ref.arm[bs.LEFT].joint[bs.EP].ref = tempTheta[3]
+		ref.arm[bs.LEFT].joint[bs.WY].ref = tempTheta[4]
+		ref.arm[bs.LEFT].joint[bs.WP].ref = tempTheta[5]
+		ref.arm[bs.LEFT].joint[bs.WY2].ref = tempTheta[6]
 		moveArm(ref, arm, limb)
 	elif arm == bs.RIGHT:
 		ref.arm[bs.RIGHT].joint[bs.SY].ref = tempTheta[0]
 		ref.arm[bs.RIGHT].joint[bs.SP].ref = tempTheta[1]
-		ref.arm[bs.RIGHT].joint[bs.WY].ref = tempTheta[2]
-		ref.arm[bs.RIGHT].joint[bs.WP].ref = tempTheta[3]
-		ref.arm[bs.RIGHT].joint[bs.SR].ref = tempTheta[4]
-		ref.arm[bs.RIGHT].joint[bs.EP].ref = tempTheta[5]
+		ref.arm[bs.RIGHT].joint[bs.SR].ref = tempTheta[2]
+		ref.arm[bs.RIGHT].joint[bs.EP].ref = tempTheta[3]
+		ref.arm[bs.RIGHT].joint[bs.WY].ref = tempTheta[4]
+		ref.arm[bs.RIGHT].joint[bs.WP].ref = tempTheta[5]
+		ref.arm[bs.RIGHT].joint[bs.WY2].ref = tempTheta[6]
 		moveArm(ref, arm, limb)
 
 	r.put(ref)
@@ -167,7 +169,7 @@ def main():
   lTheta = np.zeros((7,1))
   rTheta = np.zeros((7,1))
 
-  lGoal = np.array([[1.42],[0.970],[1.0]])
+  lGoal = np.array([[0.4],[0.0],[0.0]])
   getIK(bs.LEFT, lTheta, lGoal, ref, r, left)
 
   rGoal = np.array([[0.0],[0.0],[0.0]])
