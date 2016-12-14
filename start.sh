@@ -35,7 +35,7 @@ case $1 in
   'enable')
     EnableBaxter
   ;;
-  'workspace')
+  'ws')
     Workspace
   ;;
   'link')
@@ -48,7 +48,7 @@ case $1 in
     echo 'Options:'
     echo 'sim       - setup the simulator for baxter'
     echo 'enable    - enable baxter, setup channels and run baxterJoint file'
-    echo 'workspace - enter baxter workspace'
+    echo 'ws        - enter baxter workspace'
     echo 'link      - symbolic link into baxter_example'
     echo 'run       - run baxter joint command and read file'
   ;;
