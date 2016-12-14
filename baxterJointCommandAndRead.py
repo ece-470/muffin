@@ -101,9 +101,9 @@ def getJ(arm, theta, dtheta):
 
 def getMet(e, G):
 	met = math.sqrt(math.pow(e[0] - G[0],2) + math.pow(e[1] - G[1],2) + math.pow(e[2] - G[2],2))
-	print "End: ",e
-	print "Goal: ",G
-	print "Distance: ",met
+	#print "End: ",e
+	#print "Goal: ",G
+	#print "Distance: ",met
 	return met
 
 def getNext(e, G, de, h):
@@ -164,19 +164,29 @@ def main():
 
   lTheta = np.zeros((6,1))
   rTheta = np.zeros((6,1))
-#  rTheta[0,0] = 0.0
-#  rTheta[1,0] = 0.0
-#  rTheta[2,0] = 0.0
-#  rTheta[3,0] = 0.0
-#  rTheta[4,0] = 0.0
-#  rTheta[5,0] = 0.0
-#  getFK(bs.RIGHT, rTheta)
 
-#  lGoal = np.transpose(np.array([0.4,0.0,0.0]))
-#  getIK(bs.LEFT, lTheta, lGoal, ref, r, left)
+  #rTheta[0,0] = 0.0
+  #rTheta[1,0] = 0.0
+  #rTheta[2,0] = 0.0
+  #rTheta[3,0] = 0.0
+  #rTheta[4,0] = 0.0
+  #rTheta[5,0] = 0.0
+  #print 'RIGHT FK', getFK(bs.RIGHT, rTheta)
 
-  #rGoal = np.array([[0.807],[0.0],[0.191]])
-  rGoal = np.array([[0.80],[0.30],[0.60]])
+  #lTheta[0,0] = 0.0
+  #lTheta[1,0] = 0.0
+  #lTheta[2,0] = 0.0
+  #lTheta[3,0] = 0.0
+  #lTheta[4,0] = 0.0
+  #lTheta[5,0] = 0.0
+  #print 'LEFT FK', getFK(bs.LEFT, lTheta)
+
+  #lGoal = np.array([[0.807],[0.0],[0.191]]) # zero position
+  lGoal = np.transpose(np.array([0.8,0.3,0.6]))
+  getIK(bs.LEFT, lTheta, lGoal, ref, r, left)
+
+  #rGoal = np.array([[0.807],[0.0],[0.191]]) # zero position
+  rGoal = np.array([[0.8],[0.3],[0.6]])
   getIK(bs.RIGHT, rTheta, rGoal, ref, r, right)
 
 #  ref.arm[bs.RIGHT].joint[bs.WY2].ref = 3.0
