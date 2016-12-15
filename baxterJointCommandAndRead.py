@@ -68,40 +68,53 @@ def DHMatrix(alpha,a,d,theta):
 		[0,math.sin(alpha),math.cos(alpha),d],
 		[0,0,0,1],
 		])
+	#print "DHMatrix"
+	#print "T:",T
 	return T
 
 def getFK(arm, theta):
-	T = np.array([np.zeros((4,4)),np.zeros((4,4)),np.zeros((4,4)),np.zeros((4,4)),np.zeros((4,4)),np.zeros((4,4))])
+	T = np.array([np.zeros((4,4)),np.zeros((4,4)),np.zeros((4,4)),np.zeros((4,4)),np.zeros((4,4)),np.zeros((4,4)),np.zeros((4,4))])
 
 	DH = np.array([
-		[-np.pi/2,0.069,0.270,theta[0]],
+		[-np.pi/2,0.069,0.27035,theta[0]],
 		[np.pi/2,0.0,0.0,theta[1]+np.pi/2],
-		[-np.pi/2,0.069,0.364,theta[2]],
+		[-np.pi/2,0.069,0.36435,theta[2]],
 		[np.pi/2,0.0,0.0,theta[3]],
-		[-np.pi/2,0.01,0.374,theta[4]],
+		[-np.pi/2,0.01,0.37429,theta[4]],
 		[np.pi/2,0,0,theta[5]],
+		[0.0, 0.0, 0.229525,theta[6]],
 		])
 
-	for i in range(6):
+	for i in range(7):
 		T[i] = DHMatrix(DH[i][0],DH[i][1],DH[i][2],DH[i][3])
 
-	T = np.dot(np.dot(np.dot(np.dot(np.dot(T[0],T[1]),T[2]),T[3]),T[4]),T[5])
+	T = np.dot(np.dot(np.dot(np.dot(np.dot(np.dot(T[0],T[1]),T[2]),T[3]),T[4]),T[5]),T[6])
 
 	position = np.array([[round(T[0,3],3)],[round(T[1,3],3)],[round(T[2,3],3)]])
+	#print "getFK"
+	#print "arm",arm
+	#print "theta:",theta
+	#print "position",position
 	return position
 
 def getJ(arm, theta, dtheta):
-	jac = np.zeros((3,6))
+	jac = np.zeros((3,7))
 	for i in range((np.shape(jac))[0]):
 		for j in range((np.shape(jac))[1]):
 			tempTheta = np.copy(theta)
 			tempTheta[j] = theta[j] + dtheta
 			fk = getFK(arm, tempTheta)
 			jac[i,j] = (fk[i,0]) / dtheta
+	#print "getJ"
+	#print "arm:",arm
+	#print "theta:",theta
+	#print "dtheta:",dtheta
+	#print "jac:",jac
 	return jac
 
 def getMet(e, G):
 	met = math.sqrt(math.pow(e[0] - G[0],2) + math.pow(e[1] - G[1],2) + math.pow(e[2] - G[2],2))
+	#print "getMet"
 	#print "End: ",e
 	#print "Goal: ",G
 	#print "Distance: ",met
@@ -112,26 +125,31 @@ def getNext(e, G, de, h):
 	dy = (G[1] - e[1]) * de / h
 	dz = (G[2] - e[2]) * de / h
 	DE = np.array([[round(dx,3)],[round(dy,3)],[round(dz,3)]]) 
+	#print "getNext"
+	#print "End:",e
+	#print "Goal:",G
+	#print "de:",de
+	#print "Distance:",h
+	#print "DE:",DE
 	return DE
 
 def getIK(arm, theta, G, ref, r, limb):
-	dtheta = 0.01
-	de = 0.10
-	e = np.array([[0.0],[0.0],[0.0]])
+	dtheta = 0.05
+	de = 10.0
+	e = getFK(arm, theta)
 	tempTheta = np.copy(theta)
 	met = getMet(e, G)
-	tempMet = met
 	t1 = time.time()
-	while(met > 0.15):
+	while(met > 0.05):
 		jac = getJ(arm, tempTheta, dtheta)
 		jacInv = np.linalg.pinv(jac)
-		DE = getNext(e, G, de, tempMet)
+		DE = getNext(e, G, de, met)
 		Dtheta = np.dot(jacInv, DE)
 		tempTheta = np.add(tempTheta, Dtheta)
 		e = getFK(arm, tempTheta)
 		met = getMet(e, G)
 		if(time.time() - t1 > 15):
-			print "over 15 seconds:",arm
+			print "Stuck?"
 			break
 
 	if arm == bs.LEFT:
@@ -141,7 +159,7 @@ def getIK(arm, theta, G, ref, r, limb):
 		ref.arm[bs.LEFT].joint[bs.EP].ref = tempTheta[3]
 		ref.arm[bs.LEFT].joint[bs.WY].ref = tempTheta[4]
 		ref.arm[bs.LEFT].joint[bs.WP].ref = tempTheta[5]
-		moveArm(ref, arm, limb)
+		ref.arm[bs.LEFT].joint[bs.WY2].ref = tempTheta[6]
 	elif arm == bs.RIGHT:
 		ref.arm[bs.RIGHT].joint[bs.SY].ref = tempTheta[0]
 		ref.arm[bs.RIGHT].joint[bs.SP].ref = tempTheta[1]
@@ -149,8 +167,9 @@ def getIK(arm, theta, G, ref, r, limb):
 		ref.arm[bs.RIGHT].joint[bs.EP].ref = tempTheta[3]
 		ref.arm[bs.RIGHT].joint[bs.WY].ref = tempTheta[4]
 		ref.arm[bs.RIGHT].joint[bs.WP].ref = tempTheta[5]
-		moveArm(ref, arm, limb)
+		ref.arm[bs.RIGHT].joint[bs.WY2].ref = tempTheta[6]
 
+	moveArm(ref, arm, limb)
 	r.put(ref)
 
 def main():
@@ -167,24 +186,26 @@ def main():
 
   [statuss, framesize] = s.get(state, wait=False, last=False)
 
-  lTheta = np.zeros((6,1))
-  rTheta = np.zeros((6,1))
+  lTheta = np.zeros((7,1))
+  rTheta = np.zeros((7,1))
 
-  #rTheta[0,0] = 0.0
-  #rTheta[1,0] = 0.0
-  #rTheta[2,0] = 0.0
-  #rTheta[3,0] = 0.0
-  #rTheta[4,0] = 0.0
-  #rTheta[5,0] = 0.0
-  #print 'RIGHT FK', getFK(bs.RIGHT, rTheta)
+  rTheta[0,0] = 0.0
+  rTheta[1,0] = 0.0
+  rTheta[2,0] = 0.0
+  rTheta[3,0] = 0.0
+  rTheta[4,0] = 0.0
+  rTheta[5,0] = 0.0
+  rTheta[6,0] = 0.0
+  print 'RIGHT FK', getFK(bs.RIGHT, rTheta)
 
-  #lTheta[0,0] = 0.0
-  #lTheta[1,0] = 0.0
-  #lTheta[2,0] = 0.0
-  #lTheta[3,0] = 0.0
-  #lTheta[4,0] = 0.0
-  #lTheta[5,0] = 0.0
-  #print 'LEFT FK', getFK(bs.LEFT, lTheta)
+  lTheta[0,0] = 0.0
+  lTheta[1,0] = 0.0
+  lTheta[2,0] = 0.0
+  lTheta[3,0] = 0.0
+  lTheta[4,0] = 0.0
+  lTheta[5,0] = 0.0
+  lTheta[6,0] = 0.0
+  print 'LEFT FK', getFK(bs.LEFT, lTheta)
 
   #rGoal = np.array([[0.807],[0.0],[0.191]]) # zero position
   rx = float(raw_input("rX: "))

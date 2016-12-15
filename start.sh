@@ -1,4 +1,5 @@
 ROS_LOC=/home/student/ros_ws
+ROS_SCR=/home/student/ros_ws/src/baxter_examples/scripts/
 MUFFIN=/home/student/projects/muffin
 
 Workspace() {
@@ -12,8 +13,11 @@ StartBaxter() {
 }
 
 EnableBaxter() {
+  cd $ROS_SCR
   rosrun baxter_tools enable_robot.py -e
+  SymLink
   SetupChannel
+  RunBaxterJoint
 }
 
 SetupChannel() {
