@@ -207,14 +207,12 @@ def main():
   lTheta[6,0] = 0.0
   print 'LEFT FK', getFK(bs.LEFT, lTheta)
 
-  #rGoal = np.array([[0.807],[0.0],[0.191]]) # zero position
   rx = float(raw_input("rX: "))
   ry = float(raw_input("rY: "))
   rz = float(raw_input("rZ: "))
   rGoal = np.array([[rx],[ry],[rz]])
   getIK(bs.RIGHT, rTheta, rGoal, ref, r, right)
 
-  #lGoal = np.array([[0.807],[0.0],[0.191]]) # zero position
   lx = float(raw_input("lX: "))
   ly = float(raw_input("lY: "))
   lz = float(raw_input("lZ: "))
